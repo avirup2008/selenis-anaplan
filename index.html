@@ -355,25 +355,31 @@ html,body{height:100%;font-family:'IBM Plex Sans',sans-serif;background:var(--bg
 /* input bar */
 .chat-input-bar{
   flex-shrink:0;
-  border-top:1px solid var(--border);
-  background:var(--surface);
-  padding:12px 20px;
-  display:flex;
-  gap:10px;
-  align-items:flex-end;
+  background:transparent;
+  padding:0 24px 24px;
+  position:relative;
 }
-.chat-input-wrap{
-  flex:1;
-  border:1px solid var(--border2);
-  border-radius:var(--radius);
-  background:var(--bg);
-  padding:10px 14px;
+.chat-input-bar::before{
+  content:'';
+  position:absolute;
+  top:-40px;left:0;right:0;height:40px;
+  background:linear-gradient(to bottom,transparent,var(--bg));
+  pointer-events:none;
+}
+.chat-input-inner{
+  max-width:760px;
+  margin:0 auto;
+  border:1.5px solid var(--border2);
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+  box-shadow:var(--shadow);
   display:flex;
   align-items:flex-end;
   gap:8px;
+  padding:10px 10px 10px 16px;
   transition:border-color 0.15s;
 }
-.chat-input-wrap:focus-within{border-color:var(--accent);}
+.chat-input-inner:focus-within{border-color:var(--accent);}
 #chat-input{
   flex:1;
   background:transparent;
@@ -384,9 +390,10 @@ html,body{height:100%;font-family:'IBM Plex Sans',sans-serif;background:var(--bg
   color:var(--text);
   resize:none;
   line-height:1.5;
-  max-height:140px;
+  max-height:160px;
   overflow-y:auto;
-  min-height:22px;
+  min-height:24px;
+  padding:2px 0;
 }
 #chat-input::placeholder{color:var(--text3);}
 .btn-send{
@@ -395,17 +402,16 @@ html,body{height:100%;font-family:'IBM Plex Sans',sans-serif;background:var(--bg
   color:#fff;
   border:none;
   border-radius:8px;
-  padding:10px 18px;
-  font-size:13px;
-  font-weight:600;
-  font-family:'IBM Plex Sans',sans-serif;
+  width:38px;
+  height:38px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   cursor:pointer;
   transition:background 0.15s;
-  white-space:nowrap;
-  height:42px;
 }
 .btn-send:hover{background:var(--accent2);}
-.btn-send:disabled{background:var(--surface3);color:var(--text3);cursor:not-allowed;}
+.btn-send:disabled{background:var(--surface3);cursor:not-allowed;opacity:0.5;}
 .input-hint{
   font-size:10px;
   font-family:'IBM Plex Mono',monospace;
@@ -520,7 +526,7 @@ html,body{height:100%;font-family:'IBM Plex Sans',sans-serif;background:var(--bg
   </div>
 
   <div class="chat-input-bar">
-    <div class="chat-input-wrap">
+    <div class="chat-input-inner">
       <textarea
         id="chat-input"
         rows="1"
@@ -528,8 +534,12 @@ html,body{height:100%;font-family:'IBM Plex Sans',sans-serif;background:var(--bg
         onkeydown="handleKey(event)"
         oninput="autoResize(this)"
       ></textarea>
+      <button class="btn-send" id="btn-send" onclick="sendMessage()" title="Send">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 13V3M3 8l5-5 5 5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
     </div>
-    <button class="btn-send" id="btn-send" onclick="sendMessage()">Send →</button>
   </div>
 
 </div>
@@ -690,7 +700,7 @@ function setLoading(state) {
   document.getElementById('chat-input').disabled = state;
 }
 
-// ── Send message
+// ── Send message (streaming)
 async function sendMessage() {
   if (isLoading) return;
   var input = document.getElementById('chat-input');
@@ -701,10 +711,12 @@ async function sendMessage() {
   input.style.height = 'auto';
   setLoading(true);
 
-  // Add to history
   messages.push({ role: 'user', content: text });
   appendUserMessage(text);
   appendTypingIndicator();
+
+  var fullText = '';
+  var bubbleEl = null;
 
   try {
     var res = await fetch('/api/chat', {
@@ -713,28 +725,75 @@ async function sendMessage() {
       body: JSON.stringify({ messages: messages })
     });
 
-    removeTypingIndicator();
-
+    // Non-2xx before streaming starts — Poe returned an error JSON
     if (!res.ok) {
       var errData = await res.json().catch(function() { return {}; });
       throw new Error(errData.error || 'HTTP ' + res.status);
     }
 
-    var data = await res.json();
-    var reply = data.reply || '';
+    removeTypingIndicator();
 
-    messages.push({ role: 'assistant', content: reply });
-    appendBotMessage(renderMarkdown(reply));
+    // Create the bot bubble immediately so tokens render into it
+    bubbleEl = appendStreamingBotBubble();
+
+    var reader = res.body.getReader();
+    var decoder = new TextDecoder();
+    var buffer = '';
+
+    while (true) {
+      var _ref = await reader.read();
+      var done = _ref.done, value = _ref.value;
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // SSE lines arrive as "data: {...}\n\n"
+      var lines = buffer.split('\n');
+      buffer = lines.pop(); // keep incomplete last line
+
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (!line || line === 'data: [DONE]') continue;
+        if (!line.startsWith('data: ')) continue;
+
+        try {
+          var json = JSON.parse(line.slice(6));
+          var token = json?.choices?.[0]?.delta?.content;
+          if (token) {
+            fullText += token;
+            bubbleEl.innerHTML = renderMarkdown(fullText);
+            scrollToBottom();
+          }
+        } catch (e) {
+          // malformed chunk — skip
+        }
+      }
+    }
+
+    // Commit complete response to history
+    if (fullText) {
+      messages.push({ role: 'assistant', content: fullText });
+    }
 
   } catch (err) {
     removeTypingIndicator();
+    if (bubbleEl) bubbleEl.closest('.msg-row').remove();
     appendError('Error: ' + (err.message || 'Something went wrong. Please try again.'));
-    // Remove the failed user message from history
     messages.pop();
   } finally {
     setLoading(false);
     document.getElementById('chat-input').focus();
   }
+}
+
+function appendStreamingBotBubble() {
+  var container = document.getElementById('chat-messages');
+  var row = document.createElement('div');
+  row.className = 'msg-row';
+  row.innerHTML = botAvatarSvg() + '<div class="msg-bubble"></div>';
+  container.appendChild(row);
+  scrollToBottom();
+  return row.querySelector('.msg-bubble');
 }
 </script>
 </body>
