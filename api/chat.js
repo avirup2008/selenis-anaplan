@@ -1,48 +1,70 @@
-export default async function handler(req, res) {
-  // Only accept POST
+export const config = { runtime: 'edge' };
+
+export default async function handler(req) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   const apiKey = process.env.POE_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: 'API key not configured' });
-  }
-
-  const { messages } = req.body;
-  if (!messages || !Array.isArray(messages) || messages.length === 0) {
-    return res.status(400).json({ error: 'Invalid messages payload' });
-  }
-
-  try {
-    const poeRes = await fetch('https://api.poe.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'SelenisAI',
-        messages: messages,
-        stream: false,
-      }),
+    return new Response(JSON.stringify({ error: 'API key not configured' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
     });
-
-    if (!poeRes.ok) {
-      const errText = await poeRes.text();
-      console.error('Poe API error:', poeRes.status, errText);
-      return res.status(poeRes.status).json({
-        error: `Poe API returned ${poeRes.status}`,
-      });
-    }
-
-    const data = await poeRes.json();
-    const reply = data?.choices?.[0]?.message?.content ?? '';
-
-    return res.status(200).json({ reply });
-
-  } catch (err) {
-    console.error('Proxy error:', err);
-    return res.status(500).json({ error: 'Internal server error' });
   }
+
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const { messages } = body;
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    return new Response(JSON.stringify({ error: 'Invalid messages payload' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const poeRes = await fetch('https://api.poe.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'SelenisAI',
+      messages: messages,
+      stream: true,
+    }),
+  });
+
+  if (!poeRes.ok) {
+    const errText = await poeRes.text();
+    return new Response(
+      JSON.stringify({ error: `Poe API returned ${poeRes.status}`, detail: errText }),
+      {
+        status: poeRes.status,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  }
+
+  // Pipe Poe's SSE stream straight back to the browser
+  return new Response(poeRes.body, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'X-Accel-Buffering': 'no',
+    },
+  });
 }
