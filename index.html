@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selenis — EyeOn Anaplan Knowledge Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#FAF8F0;
+  --bg2:#F2EFE8;
+  --surface:#FFFDF8;
+  --surface2:#F5F2EA;
+  --surface3:#EBE8E0;
+  --text:#1C2129;
+  --text2:#595E6B;
+  --text3:#9EA1AB;
+  --text4:#B8BABE;
+  --accent:#1A7F8A;
+  --accent2:#1F9BAA;
+  --accent-pale:rgba(26,127,138,0.08);
+  --accent-bd:rgba(26,127,138,0.22);
+  --accent-hero:#E4F0F1;
+  --pos:#217348;
+  --neg:#B82E2E;
+  --warn:#BF801E;
+  --border:rgba(28,33,41,0.08);
+  --border2:rgba(28,33,41,0.12);
+  --rule:#DED9CF;
+  --shadow-sm:0 1px 3px rgba(28,33,41,0.06),0 1px 2px rgba(28,33,41,0.04);
+  --shadow:0 4px 16px rgba(28,33,41,0.08),0 2px 6px rgba(28,33,41,0.05);
+  --shadow-lg:0 12px 40px rgba(28,33,41,0.10),0 4px 12px rgba(28,33,41,0.06);
+  --radius:10px;
+  --radius-lg:14px;
+  --radius-xl:20px;
+}
+html,body{height:100%;font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+.screen{display:none;min-height:100vh;}
+.screen.active{display:block;}
+
+/* ── NAV ── */
+.intro-nav{
+  position:absolute;top:0;left:0;right:0;z-index:10;
+  padding:18px 28px;
+  display:flex;align-items:center;gap:10px;
+}
+.nav-icon{display:flex;align-items:center;justify-content:center;}
+.nav-name{font-size:14px;font-weight:600;letter-spacing:0.02em;color:var(--text);}
+.nav-byline{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text3);}
+
+/* ── LANDING ── */
+#screen-landing{position:relative;}
+.intro-split{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  min-height:100vh;
+}
+.intro-hero{
+  background:var(--accent-hero);
+  padding:100px 40px 60px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:16px;
+  border-right:1px solid var(--border);
+}
+.hero-card{
+  background:var(--surface);
+  border-radius:var(--radius-lg);
+  border:1px solid var(--border);
+  padding:18px;
+  width:100%;
+  max-width:360px;
+  box-shadow:var(--shadow);
+}
+.hero-card-eyebrow{
+  font-size:9px;
+  font-family:'IBM Plex Mono',monospace;
+  color:var(--accent);
+  letter-spacing:0.12em;
+  margin-bottom:14px;
+}
+.hero-msg-user{
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom:10px;
+}
+.hero-msg-user span{
+  background:var(--accent);
+  color:#fff;
+  padding:7px 12px;
+  border-radius:13px 13px 3px 13px;
+  font-size:12px;
+  max-width:88%;
+  line-height:1.45;
+}
+.hero-msg-bot{
+  display:flex;
+  gap:8px;
+  align-items:flex-start;
+  margin-bottom:10px;
+}
+.hero-bot-avatar{
+  width:20px;height:20px;
+  border-radius:50%;
+  background:var(--accent);
+  flex-shrink:0;
+  margin-top:2px;
+  display:flex;align-items:center;justify-content:center;
+}
+.hero-msg-bot p{
+  background:var(--bg2);
+  padding:8px 11px;
+  border-radius:3px 13px 13px 13px;
+  font-size:12px;
+  line-height:1.5;
+  color:var(--text);
+  flex:1;
+}
+
+.intro-content{
+  padding:100px 52px 60px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.intro-content-inner{max-width:480px;}
+.intro-eyebrow{
+  font-size:9px;
+  font-family:'IBM Plex Mono',monospace;
+  letter-spacing:0.12em;
+  color:var(--text3);
+  text-transform:uppercase;
+  margin-bottom:14px;
+}
+.intro-headline{
+  font-size:30px;
+  font-weight:700;
+  line-height:1.18;
+  color:var(--text);
+  margin-bottom:14px;
+}
+.intro-headline em{
+  font-style:italic;
+  color:var(--accent);
+}
+.intro-sub{
+  font-size:14px;
+  color:var(--text2);
+  line-height:1.65;
+  margin-bottom:28px;
+}
+.intro-stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-bottom:28px;
+}
+.stat-block{
+  background:var(--bg2);
+  border-radius:8px;
+  padding:12px 8px;
+  text-align:center;
+}
+.stat-label{
+  font-size:10px;
+  font-weight:700;
+  font-family:'IBM Plex Mono',monospace;
+  color:var(--accent);
+  line-height:1.3;
+}
+.intro-cta{
+  width:100%;
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:var(--radius);
+  padding:14px 20px;
+  font-size:14px;
+  font-weight:600;
+  font-family:'IBM Plex Sans',sans-serif;
+  cursor:pointer;
+  transition:background 0.15s;
+  letter-spacing:0.01em;
+}
+.intro-cta:hover{background:var(--accent2);}
+.intro-foot{
+  font-size:10px;
+  font-family:'IBM Plex Mono',monospace;
+  color:var(--text3);
+  margin-top:14px;
+  line-height:1.5;
+}
+
+/* ── CHAT SCREEN ── */
+#screen-chat{
+  display:none;
+  flex-direction:column;
+  height:100vh;
+}
+#screen-chat.active{display:flex;}
+
+.chat-header{
+  flex-shrink:0;
+  height:56px;
+  border-bottom:1px solid var(--border);
+  background:var(--surface);
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:0 20px;
+}
+.chat-header-name{font-size:14px;font-weight:600;color:var(--text);}
+.chat-header-sub{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text3);}
+.chat-header-badge{
+  font-size:9px;
+  font-family:'IBM Plex Mono',monospace;
+  background:var(--accent-pale);
+  border:1px solid var(--accent-bd);
+  color:var(--accent);
+  padding:3px 9px;
+  border-radius:10px;
+}
+.chat-header-actions{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.btn-new{
+  font-size:11px;
+  font-family:'IBM Plex Mono',monospace;
+  color:var(--text2);
+  background:var(--bg2);
+  border:1px solid var(--border2);
+  border-radius:6px;
+  padding:5px 12px;
+  cursor:pointer;
+  transition:background 0.12s;
+}
+.btn-new:hover{background:var(--surface3);}
+
+.chat-messages{
+  flex:1;
+  overflow-y:auto;
+  padding:28px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  scroll-behavior:smooth;
+}
+
+/* welcome state */
+.chat-welcome{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  flex:1;
+  text-align:center;
+  padding:40px 20px;
+  gap:10px;
+}
+.welcome-icon{
+  width:44px;height:44px;
+  border-radius:50%;
+  background:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:4px;
+}
+.welcome-title{font-size:16px;font-weight:600;color:var(--text);}
+.welcome-sub{font-size:13px;color:var(--text2);max-width:340px;line-height:1.6;}
+
+/* message rows */
+.msg-row{display:flex;gap:10px;align-items:flex-start;max-width:820px;width:100%;margin:0 auto;}
+.msg-row.user{justify-content:flex-end;}
+.msg-avatar{
+  width:28px;height:28px;
+  border-radius:50%;
+  background:var(--accent);
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  margin-top:2px;
+}
+.msg-bubble{
+  padding:11px 15px;
+  border-radius:3px 16px 16px 16px;
+  font-size:14px;
+  line-height:1.65;
+  color:var(--text);
+  background:var(--surface);
+  border:1px solid var(--border);
+  max-width:75%;
+}
+.msg-bubble.user{
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:16px 16px 3px 16px;
+}
+.msg-bubble p{margin-bottom:8px;}
+.msg-bubble p:last-child{margin-bottom:0;}
+.msg-bubble ul,.msg-bubble ol{padding-left:18px;margin-bottom:8px;}
+.msg-bubble li{margin-bottom:4px;}
+.msg-bubble li:last-child{margin-bottom:0;}
+.msg-bubble code{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  background:var(--bg2);
+  padding:1px 5px;
+  border-radius:4px;
+  color:var(--accent);
+}
+.msg-bubble.user code{background:rgba(255,255,255,0.18);color:#fff;}
+.msg-bubble pre{
+  background:var(--bg2);
+  border-radius:6px;
+  padding:10px 12px;
+  overflow-x:auto;
+  margin-bottom:8px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  line-height:1.5;
+}
+.msg-bubble strong{font-weight:600;}
+.msg-bubble em{font-style:italic;}
+.msg-bubble h1,.msg-bubble h2,.msg-bubble h3{font-weight:600;margin-bottom:6px;margin-top:4px;}
+.msg-bubble h1{font-size:16px;}
+.msg-bubble h2{font-size:15px;}
+.msg-bubble h3{font-size:14px;}
+
+/* typing indicator */
+.typing-dots{display:flex;gap:5px;align-items:center;padding:14px 16px;}
+@keyframes tdot{0%,80%,100%{transform:scale(0.6);opacity:0.3}40%{transform:scale(1);opacity:1}}
+.typing-dots span{
+  width:7px;height:7px;
+  border-radius:50%;
+  background:var(--accent);
+  animation:tdot 1.2s ease-in-out infinite;
+  display:inline-block;
+}
+.typing-dots span:nth-child(2){animation-delay:0.2s;}
+.typing-dots span:nth-child(3){animation-delay:0.4s;}
+
+/* error bubble */
+.msg-error{
+  max-width:820px;width:100%;margin:0 auto;
+  background:rgba(184,46,46,0.06);
+  border:1px solid rgba(184,46,46,0.18);
+  border-radius:var(--radius);
+  padding:10px 14px;
+  font-size:13px;
+  color:var(--neg);
+  font-family:'IBM Plex Mono',monospace;
+}
+
+/* input bar */
+.chat-input-bar{
+  flex-shrink:0;
+  border-top:1px solid var(--border);
+  background:var(--surface);
+  padding:12px 20px;
+  display:flex;
+  gap:10px;
+  align-items:flex-end;
+}
+.chat-input-wrap{
+  flex:1;
+  border:1px solid var(--border2);
+  border-radius:var(--radius);
+  background:var(--bg);
+  padding:10px 14px;
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+  transition:border-color 0.15s;
+}
+.chat-input-wrap:focus-within{border-color:var(--accent);}
+#chat-input{
+  flex:1;
+  background:transparent;
+  border:none;
+  outline:none;
+  font-family:'IBM Plex Sans',sans-serif;
+  font-size:14px;
+  color:var(--text);
+  resize:none;
+  line-height:1.5;
+  max-height:140px;
+  overflow-y:auto;
+  min-height:22px;
+}
+#chat-input::placeholder{color:var(--text3);}
+.btn-send{
+  flex-shrink:0;
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  padding:10px 18px;
+  font-size:13px;
+  font-weight:600;
+  font-family:'IBM Plex Sans',sans-serif;
+  cursor:pointer;
+  transition:background 0.15s;
+  white-space:nowrap;
+  height:42px;
+}
+.btn-send:hover{background:var(--accent2);}
+.btn-send:disabled{background:var(--surface3);color:var(--text3);cursor:not-allowed;}
+.input-hint{
+  font-size:10px;
+  font-family:'IBM Plex Mono',monospace;
+  color:var(--text3);
+  padding:0 0 4px 2px;
+  flex-shrink:0;
+  align-self:flex-end;
+}
+
+/* ── scrollbar ── */
+.chat-messages::-webkit-scrollbar{width:4px;}
+.chat-messages::-webkit-scrollbar-track{background:transparent;}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════ LANDING -->
+<div id="screen-landing" class="screen active">
+  <nav class="intro-nav">
+    <div class="nav-icon">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M9 1v4M9 13v4M1 9h4M13 9h4M3.6 3.6l2.8 2.8M11.6 11.6l2.8 2.8M14.4 3.6l-2.8 2.8M6.4 11.6l-2.8 2.8" stroke="#1A7F8A" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="9" cy="9" r="2.5" fill="#1A7F8A"/>
+      </svg>
+    </div>
+    <span class="nav-name">Selenis</span>
+    <span class="nav-byline">· EyeOn Anaplan Accelerator</span>
+  </nav>
+
+  <div class="intro-split">
+
+    <!-- LEFT -->
+    <div class="intro-hero">
+      <div class="hero-card">
+        <div class="hero-card-eyebrow">SELENIS · KNOWLEDGE ASSISTANT</div>
+
+        <div class="hero-msg-user">
+          <span>When does Anaplan need a Data Hub?</span>
+        </div>
+
+        <div class="hero-msg-bot">
+          <div class="hero-bot-avatar">
+            <svg width="9" height="9" viewBox="0 0 18 18" fill="none">
+              <path d="M9 1v4M9 13v4M1 9h4M13 9h4M3.6 3.6l2.8 2.8M11.6 11.6l2.8 2.8M14.4 3.6l-2.8 2.8M6.4 11.6l-2.8 2.8" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="9" cy="9" r="2.5" fill="#fff"/>
+            </svg>
+          </div>
+          <p>Always required when ≥2 spoke models share master data, or when integration runs more than one source system. The Anaplan Way mandates it from the first multi-domain deployment.</p>
+        </div>
+
+        <div class="hero-msg-user">
+          <span>Show me a DISCO-compliant module name for demand input.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="intro-content">
+      <div class="intro-content-inner">
+        <p class="intro-eyebrow">EyeOn Accelerator · Knowledge</p>
+        <h1 class="intro-headline">Your Anaplan queries,<br><em>answered in depth.</em></h1>
+        <p class="intro-sub">EyeOn's Anaplan knowledge assistant — trained on implementation methodology, architecture patterns, and planning frameworks. Use in discovery, scoping, or delivery.</p>
+
+        <div class="intro-stats">
+          <div class="stat-block">
+            <div class="stat-label">BEST<br>PRACTICES</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-label">KNOWLEDGE<br>FRAMEWORK</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-label">CURATED<br>EXPERTISE</div>
+          </div>
+        </div>
+
+        <button class="intro-cta" onclick="startChat()">Ask Selenis →</button>
+        <p class="intro-foot">Powered by Poe AI · SelenisAI</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ CHAT -->
+<div id="screen-chat" class="screen">
+
+  <div class="chat-header">
+    <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+      <path d="M9 1v4M9 13v4M1 9h4M13 9h4M3.6 3.6l2.8 2.8M11.6 11.6l2.8 2.8M14.4 3.6l-2.8 2.8M6.4 11.6l-2.8 2.8" stroke="#1A7F8A" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="9" cy="9" r="2.5" fill="#1A7F8A"/>
+    </svg>
+    <span class="chat-header-name">Selenis</span>
+    <span class="chat-header-sub">Knowledge Assistant</span>
+    <div class="chat-header-actions">
+      <span class="chat-header-badge">SelenisAI · Poe</span>
+      <button class="btn-new" onclick="newChat()">+ New chat</button>
+    </div>
+  </div>
+
+  <div class="chat-messages" id="chat-messages">
+    <div class="chat-welcome" id="chat-welcome">
+      <div class="welcome-icon">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M9 1v4M9 13v4M1 9h4M13 9h4M3.6 3.6l2.8 2.8M11.6 11.6l2.8 2.8M14.4 3.6l-2.8 2.8M6.4 11.6l-2.8 2.8" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+          <circle cx="9" cy="9" r="2.5" fill="#fff"/>
+        </svg>
+      </div>
+      <div class="welcome-title">Ask Selenis</div>
+      <div class="welcome-sub">Anaplan methodology, architecture decisions, DISCO, Planual, S&OP frameworks, EyeOn best practice.</div>
+    </div>
+  </div>
+
+  <div class="chat-input-bar">
+    <div class="chat-input-wrap">
+      <textarea
+        id="chat-input"
+        rows="1"
+        placeholder="Ask about Anaplan methodology, architecture, best practice…"
+        onkeydown="handleKey(event)"
+        oninput="autoResize(this)"
+      ></textarea>
+    </div>
+    <button class="btn-send" id="btn-send" onclick="sendMessage()">Send →</button>
+  </div>
+
+</div>
+
+<script>
+// ── State
+var messages = [];
+var isLoading = false;
+
+// ── Screen management
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(function(s) {
+    s.classList.remove('active');
+    s.style.display = '';
+  });
+  document.getElementById('screen-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function startChat() {
+  showScreen('chat');
+  document.getElementById('chat-input').focus();
+}
+
+function newChat() {
+  messages = [];
+  var container = document.getElementById('chat-messages');
+  container.innerHTML = '';
+  var welcome = document.createElement('div');
+  welcome.id = 'chat-welcome';
+  welcome.className = 'chat-welcome';
+  welcome.innerHTML = '<div class="welcome-icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 1v4M9 13v4M1 9h4M13 9h4M3.6 3.6l2.8 2.8M11.6 11.6l2.8 2.8M14.4 3.6l-2.8 2.8M6.4 11.6l-2.8 2.8" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="9" cy="9" r="2.5" fill="#fff"/></svg></div><div class="welcome-title">Ask Selenis</div><div class="welcome-sub">Anaplan methodology, architecture decisions, DISCO, Planual, S&OP frameworks, EyeOn best practice.</div>';
+  container.appendChild(welcome);
+  document.getElementById('chat-input').focus();
+}
+
+// ── Input helpers
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+
+// ── Markdown renderer (lightweight)
+function renderMarkdown(text) {
+  var s = text;
+  // code blocks
+  s = s.replace(/```[\w]*\n?([\s\S]*?)```/g, function(m, code) {
+    return '<pre><code>' + escHtml(code.trim()) + '</code></pre>';
+  });
+  // inline code
+  s = s.replace(/`([^`]+)`/g, function(m, c) {
+    return '<code>' + escHtml(c) + '</code>';
+  });
+  // headers
+  s = s.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  s = s.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  s = s.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+  // bold
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // italic
+  s = s.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // unordered lists
+  s = s.replace(/(?:^|\n)((?:\s*[-*] .+\n?)+)/g, function(m, list) {
+    var items = list.trim().split('\n').map(function(li) {
+      return '<li>' + li.replace(/^\s*[-*] /, '').trim() + '</li>';
+    }).join('');
+    return '<ul>' + items + '</ul>';
+  });
+  // ordered lists
+  s = s.replace(/(?:^|\n)((?:\s*\d+\. .+\n?)+)/g, function(m, list) {
+    var items = list.trim().split('\n').map(function(li) {
+      return '<li>' + li.replace(/^\s*\d+\. /, '').trim() + '</li>';
+    }).join('');
+    return '<ol>' + items + '</ol>';
+  });
+  // paragraphs — split on double newlines
+  var chunks = s.split(/\n{2,}/);
+  var out = chunks.map(function(chunk) {
+    chunk = chunk.trim();
+    if (!chunk) return '';
+    if (/^<(h[123]|ul|ol|pre)/.test(chunk)) return chunk;
+    return '<p>' + chunk.replace(/\n/g, '<br>') + '</p>';
+  }).filter(Boolean).join('');
+  return out;
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── DOM helpers
+function botAvatarSvg() {
+  return '<div class="msg-avatar"><svg width="12" height="12" viewBox="0 0 18 18" fill="none"><path d="M9 1v4M9 13v4M1 9h4M13 9h4M3.6 3.6l2.8 2.8M11.6 11.6l2.8 2.8M14.4 3.6l-2.8 2.8M6.4 11.6l-2.8 2.8" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="9" r="2.5" fill="#fff"/></svg></div>';
+}
+
+function appendUserMessage(text) {
+  var welcome = document.getElementById('chat-welcome');
+  if (welcome) welcome.remove();
+  var container = document.getElementById('chat-messages');
+  var row = document.createElement('div');
+  row.className = 'msg-row user';
+  var bubble = document.createElement('div');
+  bubble.className = 'msg-bubble user';
+  bubble.textContent = text;
+  row.appendChild(bubble);
+  container.appendChild(row);
+  scrollToBottom();
+}
+
+function appendTypingIndicator() {
+  var container = document.getElementById('chat-messages');
+  var row = document.createElement('div');
+  row.className = 'msg-row';
+  row.id = 'typing-row';
+  row.innerHTML = botAvatarSvg() + '<div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+  container.appendChild(row);
+  scrollToBottom();
+}
+
+function removeTypingIndicator() {
+  var el = document.getElementById('typing-row');
+  if (el) el.remove();
+}
+
+function appendBotMessage(html) {
+  var container = document.getElementById('chat-messages');
+  var row = document.createElement('div');
+  row.className = 'msg-row';
+  row.innerHTML = botAvatarSvg() + '<div class="msg-bubble">' + html + '</div>';
+  container.appendChild(row);
+  scrollToBottom();
+}
+
+function appendError(msg) {
+  var container = document.getElementById('chat-messages');
+  var el = document.createElement('div');
+  el.className = 'msg-error';
+  el.textContent = msg;
+  container.appendChild(el);
+  scrollToBottom();
+}
+
+function scrollToBottom() {
+  var container = document.getElementById('chat-messages');
+  container.scrollTop = container.scrollHeight;
+}
+
+function setLoading(state) {
+  isLoading = state;
+  document.getElementById('btn-send').disabled = state;
+  document.getElementById('chat-input').disabled = state;
+}
+
+// ── Send message
+async function sendMessage() {
+  if (isLoading) return;
+  var input = document.getElementById('chat-input');
+  var text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  setLoading(true);
+
+  // Add to history
+  messages.push({ role: 'user', content: text });
+  appendUserMessage(text);
+  appendTypingIndicator();
+
+  try {
+    var res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: messages })
+    });
+
+    removeTypingIndicator();
+
+    if (!res.ok) {
+      var errData = await res.json().catch(function() { return {}; });
+      throw new Error(errData.error || 'HTTP ' + res.status);
+    }
+
+    var data = await res.json();
+    var reply = data.reply || '';
+
+    messages.push({ role: 'assistant', content: reply });
+    appendBotMessage(renderMarkdown(reply));
+
+  } catch (err) {
+    removeTypingIndicator();
+    appendError('Error: ' + (err.message || 'Something went wrong. Please try again.'));
+    // Remove the failed user message from history
+    messages.pop();
+  } finally {
+    setLoading(false);
+    document.getElementById('chat-input').focus();
+  }
+}
+</script>
+</body>
+</html>
