@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const poeRes = await fetch('https://api.poe.com/bot/SelenisAI/v1/chat/completions', {
+    const poeRes = await fetch('https://api.poe.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
